@@ -24,11 +24,12 @@ int main(int argc, char *argv[]) {
 	// now we want to send multipl to other process
 	
 	const uint32_t buf_size = 1000;
+	mpz_t fact; mpz_init(fact);
 
 	if (rank != 0) {
 		char buf[buf_size]; int len = 0;
 		len = gmp_sprintf(buf, "%Zd", prod);
-		for (int i = rank - 1; i >= 0; ++i) {
+		for (int i = rank - 1; i >= 0; --i) {
 			MPI_Send(&len,   1,  MPI_INT, i, 0, MPI_COMM_WORLD);
 			MPI_Send( buf, len, MPI_CHAR, i, 0, MPI_COMM_WORLD);
 		}
@@ -59,6 +60,8 @@ int main(int argc, char *argv[]) {
 		}
 		gmp_printf("result sum is: %Zd\n", sum);
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
+	
 
 
 	MPI_Finalize();
