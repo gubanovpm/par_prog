@@ -16,11 +16,12 @@ int main(int argc, char *argv[]) {
 	//printf("rank = %d, leftb = %lu, rightb = %lu\n", rank, LBMASK(borders), RBMASK(borders));
   mpz_t sum ; mpz_init(sum); 
 	mpz_t prod; mpz_init(prod); mpz_add_ui(prod, prod, 1);
+
 	for (uint32_t cur = LBMASK(borders), end = RBMASK(borders); cur >= end; --cur) {
 		mpz_mul_ui(prod, prod, cur);
 		mpz_add   (sum, sum, prod);
 	}
-	gmp_printf("lb = %lu | rb = %lu | rank is %d | sum is = %Zd | prod is = %Zd\n", LBMASK(borders), RBMASK(borders), rank, sum, prod);
+	//gmp_printf("lb = %lu | rb = %lu | rank is %d | sum is = %Zd | prod is = %Zd\n", LBMASK(borders), RBMASK(borders), rank, sum, prod);
 	// now we want to send multipl to other process
 	
 	const uint32_t buf_size = 1000;
@@ -33,6 +34,8 @@ int main(int argc, char *argv[]) {
 			MPI_Send(&len,   1,  MPI_INT, i, 0, MPI_COMM_WORLD);
 			MPI_Send( buf, len, MPI_CHAR, i, 0, MPI_COMM_WORLD);
 		}
+	} else {
+		mpz_add(fact, fact, prod);
 	}
 	for (int i = rank + 1; i < comsize; ++i) {
 		char buf[buf_size]; int len = 0;
@@ -41,6 +44,7 @@ int main(int argc, char *argv[]) {
 		MPI_Recv( buf, len, MPI_CHAR, i, 0, MPI_COMM_WORLD, &status);
 		gmp_sscanf(buf, "%Zd", &prod);
 		mpz_mul(sum, sum, prod);
+		if (rank == 0) mpz_mul(fact, fact, prod);
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
 	if (rank != 0) {
@@ -48,8 +52,7 @@ int main(int argc, char *argv[]) {
 		len = gmp_sprintf(buf, "%Zd", sum);
 		MPI_Send(&len,   1,  MPI_INT, 0, 0, MPI_COMM_WORLD);
 		MPI_Send( buf, len, MPI_CHAR, 0, 0, MPI_COMM_WORLD);
-	}
-	else {
+	} else {
 		for (int i = 1; i < comsize; ++i) {
 			char buf[buf_size]; int len = 0;
 			MPI_Status status;
@@ -58,10 +61,20 @@ int main(int argc, char *argv[]) {
 			gmp_sscanf(buf, "%Zd", &prod);
 			mpz_add(sum, sum, prod);
 		}
-		gmp_printf("result sum is: %Zd\n", sum);
+
+		mpf_t result; mpf_init(result);
+		
+		mpf_t first ; mpf_init(first);
+		mpf_t second; mpf_init(second);
+		mpf_set_z(first, sum); mpf_set_z(second, fact);
+		//gmp_printf("factorial is : %Ff\n", second);
+		//gmp_printf("summary is   : %Ff\n",  first);
+		mpf_div(result, first, second);
+		gmp_printf("result sum is: %.100Ff\n", result);
+
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
-	
+
 
 
 	MPI_Finalize();
