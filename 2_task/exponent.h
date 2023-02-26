@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <gmp.h>
+#include <math.h>
 
 uint64_t get_borders(uint64_t last_num, int rank, int np);
 uint32_t get_last(uint64_t num);

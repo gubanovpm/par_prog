@@ -28,9 +28,11 @@ int main(int argc, char *argv[]) {
 	
 	const uint32_t buf_size = 100000;
 	mpz_t fact; mpz_init(fact);
+	char *buf;
 
 	if (rank != 0) {
-		char buf[buf_size]; int len = 0;
+		size_t len = 
+		char buf[buf_size]; int
 		for (uint32_t j = 0; j < buf_size; ++j) buf[j] = '\0';
 		len = gmp_sprintf(buf, "%Zd", prod);
 		for (int i = rank - 1; i >= 0; --i) {
@@ -71,21 +73,19 @@ int main(int argc, char *argv[]) {
 			//gmp_printf("When I add form %d prod = %Zd sum is : %Zd\n", i, prod, sum);
 		}
 		mpz_add_ui(sum, sum, 1);
-
-		mpf_t result; mpf_init(result);
 		
-		mpf_t first ; mpf_init(first);
-		mpf_t second; mpf_init(second);
+		uint32_t prec_b = precision * 8;
+		mpf_t result; mpf_init(result); mpf_set_prec(result, prec_b);
+		mpf_t first ; mpf_init( first); mpf_set_prec( first, prec_b);
+		mpf_t second; mpf_init(second); mpf_set_prec(second, prec_b);
 		mpf_set_z(first, sum); mpf_set_z(second, fact);
 		//gmp_printf("factorial is : %Ff\n", second);
 		//gmp_printf("summary is   : %Ff\n",  first);
 		mpf_div(result, first, second);
-		gmp_printf("result sum is: %.50Ff\n", result);
+		gmp_printf("%.*Ff\n", precision - 1, result);
 
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
-
-
 
 	MPI_Finalize();
 	return 0;
