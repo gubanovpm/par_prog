@@ -1,0 +1,8 @@
+
+a.out:10813 terminated with signal 6 at PC=7f857963fa7c SP=7ffcab5757f0.  Backtrace:
+/lib/x86_64-linux-gnu/libc.so.6(pthread_kill+0x12c)[0x7f857963fa7c]
+/lib/x86_64-linux-gnu/libc.so.6(raise+0x16)[0x7f85795eb476]
+/lib/x86_64-linux-gnu/libc.so.6(abort+0xd3)[0x7f85795d17f3]
+/lib/x86_64-linux-gnu/libc.so.6(+0x896f6)[0x7f85796326f6]
+/lib/x86_64-linux-gnu/libc.so.6(+0xa0d7c)[0x7f8579649d7c]
+/lib/x86_64-linux-gnu/libc.so.6(+0xa312b)[0x7f857964c12b]
