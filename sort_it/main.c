@@ -1,7 +1,7 @@
 #include "./sort.h"
 
 #ifndef N
-#define N 100000
+#define N 10000
 #endif
 
 #ifndef TOS

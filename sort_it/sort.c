@@ -23,64 +23,55 @@ void dump(const int *array, const size_t n) {
 }
 
 void parallel_odd_even_sort(MPI_Comm *comm, int *array, const size_t n, const int tos) {
-    int id; MPI_Comm_rank(comm[0], &id);     // номер процесса 
-    int np; MPI_Comm_size(comm[0], &np);     // количество процессов
+    int id; MPI_Comm_rank(comm[0], &id);
+    int np; MPI_Comm_size(comm[0], &np);
 
-    uint64_t borders = get_borders(n, id, np);
-    int bg_n = LBMASK(borders) - 1, count_n = RBMASK(borders);
-    int *a = (int *)calloc(count_n, sizeof(int));
+    int *displs  = (int *)malloc(np * sizeof(int));
+    int *rcounts = (int *)malloc(np * sizeof(int));
+    for (int i = 0; i < np; ++i) {
+        uint64_t borders = get_borders(n, i, np);
+        displs [i] = LBMASK(borders) - 1;
+        rcounts[i] = RBMASK(borders)    ;
+    }
 
-    memcpy(a, array + bg_n, count_n * sizeof(int));
-    straight_odd_even_sort(a, count_n, tos);
-    // dump(a, count_n);
+    int *a = (int *)malloc(rcounts[id] * sizeof(int));
+    memcpy(a, array + displs[id], rcounts[id] * sizeof(int));
+    straight_odd_even_sort(a, rcounts[id], tos);
     MPI_Status status;
 
     for (int i = 0; i < np; i++) {
         if (i % 2 == 1) {
             if (id % 2 == 1) {
                 if (id < np - 1) {
-                    int len;
-                    MPI_Recv(&len,   1, MPI_INT, id + 1, 0, comm[0], &status);
-                    int *buf = (int *)malloc(len * sizeof(int));
-                    MPI_Recv( buf, len, MPI_INT, id + 1, 0, comm[0], &status);
-                    // MPI_Barrier(comm[0]);
-                    split(a, count_n, buf, len, tos);
-                    MPI_Send( buf, len, MPI_INT, id + 1, 0, comm[0]);
-                    // MPI_Barrier(comm[0]);
+                    int *buf = (int *)malloc(rcounts[id+1] * sizeof(int));
+                    MPI_Recv( buf, rcounts[id+1], MPI_INT, id + 1, 0, comm[0], &status);
+                    split(a, rcounts[id], buf, rcounts[id+1], tos);
+                    MPI_Send( buf, rcounts[id+1], MPI_INT, id + 1, 0, comm[0]);
                     free(buf);
                 }
             } else if (id > 0) { 
-                MPI_Send(&count_n, 1, MPI_INT, id - 1, 0, comm[0]);
-                MPI_Send(a,  count_n, MPI_INT, id - 1, 0, comm[0]);
-                // MPI_Barrier(comm[0]);
-                MPI_Recv(a,  count_n, MPI_INT, id - 1, 0, comm[0], &status);
-                // MPI_Barrier(comm[0]);
+                MPI_Send(a,  rcounts[id], MPI_INT, id - 1, 0, comm[0]);
+                MPI_Recv(a,  rcounts[id], MPI_INT, id - 1, 0, comm[0], &status);
             }
         } else {
             if(id % 2 == 0) {
                 if (id < np - 1) {
-                    int len;
-                    MPI_Recv(&len,   1, MPI_INT, id + 1, 0, comm[0], &status);
-                    int *buf = (int *)malloc(len * sizeof(int));
-                    MPI_Recv( buf, len, MPI_INT, id + 1, 0, comm[0], &status);
-                    // MPI_Barrier(comm[0]);
-                    split(a, count_n, buf, len, tos);
-                    MPI_Send( buf, len, MPI_INT, id + 1, 0, comm[0]);
-                    // MPI_Barrier(comm[0]);
+                    int *buf = (int *)malloc(rcounts[id+1] * sizeof(int));
+                    MPI_Recv( buf, rcounts[id+1], MPI_INT, id + 1, 0, comm[0], &status);
+                    split(a, rcounts[id], buf, rcounts[id+1], tos);
+                    MPI_Send( buf, rcounts[id+1], MPI_INT, id + 1, 0, comm[0]);
                     free(buf);
                 }
             } else {
-                MPI_Send(&count_n, 1, MPI_INT, id - 1, 0, comm[0]);
-                MPI_Send(a,  count_n, MPI_INT, id - 1, 0, comm[0]);
-                // MPI_Barrier(comm[0]);
-                MPI_Recv(a,  count_n, MPI_INT, id - 1, 0, comm[0], &status);
-                // MPI_Barrier(comm[0]);
+                MPI_Send(a,  rcounts[id], MPI_INT, id - 1, 0, comm[0]);
+                MPI_Recv(a,  rcounts[id], MPI_INT, id - 1, 0, comm[0], &status);
             }
         }
     }
     MPI_Barrier(comm[0]);
-    // printf("%d part of array is: ", id); dump(a, count_n);
-    MPI_Gather(a, count_n, MPI_INT, array + bg_n, count_n, MPI_INT, 0, comm[0]);
+    MPI_Gatherv(a, rcounts[id], MPI_INT, array, rcounts, displs, MPI_INT, 0, comm[0]);
+    free(displs);
+    free(rcounts);
     free(a);
 }
 
