@@ -1,11 +1,11 @@
 #include "transfer_equation.hh"
 
 #ifndef N
-#define N 1000
+#define N 100
 #endif
 
 #ifndef M
-#define M 1000
+#define M 100
 #endif
 
 #ifndef T
@@ -27,12 +27,15 @@ int main() {
 	auto [R, Y] = matplot::meshgrid(matplot::linspace(0, T, N), matplot::linspace(0, X, M));
 	auto [I, J] = matplot::meshgrid(matplot::linspace(0, N-1, N), matplot::linspace(0, M-1, M));
 	auto Z = matplot::transform(I, J, [&data](size_t k, size_t m) {
-        return data(k, m);
+			//std::cout << k << " " << m << std::endl;  
+			return data(k, m);
     });
 
-	matplot::surf(R, Y, Z);
-
-  	matplot::show();
+	matplot::surf(Y, R, Z);
+	matplot::colorbar();
+	matplot::xlabel("X");
+  matplot::ylabel("T");
+  matplot::show();
 
 	return 0;
 }
