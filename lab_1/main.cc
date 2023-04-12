@@ -1,20 +1,22 @@
 #include "transfer_equation.hh"
 
 #ifndef N
-#define N 300
+#define N 100
 #endif
 
 #ifndef M
-#define M 300
+#define M 100
 #endif
 
 #ifndef T
-#define T 6.
+#define T 1.
 #endif
 
 #ifndef X
-#define X 6.
+#define X 1.
 #endif
+
+#define GRAPH
 
 double f(const double t, const double x) { return t + x; }
 double phi(const double x) { return std::cos(M_PI * x); }
