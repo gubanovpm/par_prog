@@ -1,10 +1,20 @@
 #ifndef __transfer_equation_h__
 #define __transfer_equation_h__
 
+#ifndef LBMASK
+#define LBMASK(_arg_) (((uint64_t)0xffffffff00000000 & _arg_) >> 32)
+#endif
+
+#ifndef RBMASK
+#define RBMASK(_arg_)  ((uint64_t)0x00000000ffffffff & _arg_)
+#endif
+
 #include <iostream>
+#include <cstring>
 #include <functional>
 #include <cmath>
 
+#include <mpi.h>
 #include <matplot/matplot.h>
 
 using utype = std::function<double(const double)>;
@@ -22,6 +32,7 @@ public:
 	size_t m ()  const noexcept { return _m; };
 	double tau() const noexcept { return _tau; };
 	double h()   const noexcept { return _h; };
+	double *ptr() const noexcept { return _data; }
 
 	double &operator() (const size_t i, const size_t j) const { 
 		if (i >= _n) throw std::invalid_argument("Wrong first size argument value\n");
@@ -46,9 +57,14 @@ public:
 			out << std::endl;
 		}
 	}
+	~matrix_t() {
+		delete [] _data;
+	}
 };
 
 void simple_conveyor(const ftype &f, const utype &phi, const utype &psi, matrix_t &data);
+void parallel_conv(const ftype &f, const utype &phi, const utype &psi, matrix_t &data, MPI_Comm *comm);
 double cross_scheme(const ftype &f, const matrix_t &data, const size_t n, const size_t m);
+uint64_t get_borders(uint64_t last_num, int rank, int np);
 
 #endif
