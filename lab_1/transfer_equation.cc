@@ -61,7 +61,7 @@ void parallel_conv(const ftype &f, const utype &phi, const utype &psi, matrix_t 
 			prev_data = matrix[(k-1)*rcounts[id]];
 			MPI_Recv(&next_data, 1, MPI_DOUBLE, id+1, 0, comm[0], &status);
 		}
-		std::cout << id << " | prev=" << prev_data << "| next=" << next_data << std::endl;
+		//std::cout << id << " | prev=" << prev_data << "| next=" << next_data << std::endl;
 		for (int m = 0; m < rcounts[id]; ++m) {	
 			if (m == 0) 
 				matrix[k * rcounts[id] + m] = 2*tau*(f(tau*k, h*(m+displs[id])) - (matrix[k*rcounts[id] + m+1] - matrix[k*rcounts[id]+  m-1]) / (2*h)) + prev_data;
@@ -81,6 +81,7 @@ void parallel_conv(const ftype &f, const utype &phi, const utype &psi, matrix_t 
 		}
 		int max_count = rcounts[0];
 		for (int i = 0; i < np; ++i) max_count = ((max_count < rcounts[id]) ? rcounts[id] : max_count);
+		//std::cout << "max is " << max_count << std::endl;
 		double *buf = (double *)malloc(data.n() * max_count * sizeof(double));
 		
 		for (int i = 1; i < np; ++i) {

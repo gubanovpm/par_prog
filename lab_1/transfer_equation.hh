@@ -13,6 +13,8 @@
 #include <cstring>
 #include <functional>
 #include <cmath>
+#include <sys/time.h>
+#include <time.h>
 
 #include <mpi.h>
 #include <matplot/matplot.h>
