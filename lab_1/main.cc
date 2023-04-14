@@ -1,11 +1,11 @@
 #include "transfer_equation.hh"
 
 #ifndef N
-#define N 100
+#define N 3
 #endif
 
 #ifndef M
-#define M 100
+#define M 6
 #endif
 
 #ifndef T
@@ -16,7 +16,9 @@
 #define X 1.
 #endif
 
-#define GRAPH
+#define GR
+
+#include <unistd.h>
 
 double f(const double t, const double x) { return t + x; }
 double phi(const double x) { return std::cos(M_PI * x); }
@@ -28,12 +30,16 @@ int main(int argc, char *argv[], char *envp[]) {
 	int size; MPI_Comm_size(MPI_COMM_WORLD, &size); 
 
 	if (rank == 0) {
-		matrix_t data(N, M, T, X);
+		matrix_t data(N, M, {0, T}, {0, X});
 		struct timeval stop, start;
     gettimeofday(&start, NULL);
 		simple_conveyor(f, phi, psi, data);
 		gettimeofday(&stop, NULL);
-		std::cout << "Simple time is: " << (double)((stop.tv_sec - start.tv_sec) * 1000000 + (stop.tv_usec - start.tv_usec)) / 1000000 << "s" << std::endl;
+		double ttime = (double)((stop.tv_sec - start.tv_sec) * 1000000 + (stop.tv_usec - start.tv_usec)) / 1000000;
+		printf("Simple time is: %lg\n", ttime);
+		data.dump(std::cout);
+		printf("\n");
+		//std::cout << "Simple time is: " << (double)((stop.tv_sec - start.tv_sec) * 1000000 + (stop.tv_usec - start.tv_usec)) / 1000000 << "s" << std::endl;
 	#ifdef GRAPH
 		auto [R, Y] = matplot::meshgrid(matplot::linspace(0, T, N), matplot::linspace(0, X, M));
 		auto [I, J] = matplot::meshgrid(matplot::linspace(0, N-1, N), matplot::linspace(0, M-1, M));
@@ -51,29 +57,52 @@ int main(int argc, char *argv[], char *envp[]) {
 	#endif
 	}
 	else {
-		matrix_t data(N, M, T, X);
+		matrix_t data(N, M, {0, T}, {0, X});
 		MPI_Group world_group;
     MPI_Comm_group(MPI_COMM_WORLD, &world_group);
-    int *ranks = (int *)malloc(size * sizeof(int));
-    for (int i = 1; i <= size; ++i) {  ranks[i - 1] = i; }
-        
+
+		int *ranks = (int *)malloc(size * sizeof(int));
+    for (int i = 1; i <= size; ++i) {  ranks[i - 1] = i; }    
     MPI_Group prime_group;
     MPI_Group_incl(world_group, size-1, ranks, &prime_group);
+		free(ranks);
 
     MPI_Comm prime_comm;
     MPI_Comm_create_group(MPI_COMM_WORLD, prime_group, 0, &prime_comm);
 
     int prank; MPI_Comm_rank(prime_comm, &prank);
-		
+		int psize; MPI_Comm_size(prime_comm, &psize);
+
 		struct timeval stop, start;
+		sleep(1);
     gettimeofday(&start, NULL);
 		parallel_conv(f, phi, psi, data, &prime_comm);
 		gettimeofday(&stop, NULL);
-		if(prank == 0) std::cout << "Parralel time is: " << (double)((stop.tv_sec - start.tv_sec) * 1000000 + (stop.tv_usec - start.tv_usec)) / 1000000 << "s" << std::endl;
+		//if(prank == 0) std::cout << "Parallel time is: " << (double)((stop.tv_sec - start.tv_sec) * 1000000 + (stop.tv_usec - start.tv_usec)) / 1000000 << "s" << std::endl;
 
-		MPI_Comm_rank(prime_comm, &rank);
-		if (rank == 0) {
-			//data.dump(std::cout);
+		if (prank == 0) {
+			int *displs  = (int *)malloc(psize * sizeof(int));
+			int *rcounts = (int *)malloc(psize * sizeof(int));
+			for (int i = 0; i < psize; ++i) {
+				uint64_t borders = get_borders(data.m(), i, psize);
+				displs [i] = (LBMASK(borders) - 1);
+				rcounts[i] = RBMASK(borders);
+			}
+
+			printf("\n");
+/*
+			for (int k = (int)data.n() - 1; k >= 0; --k) {
+				for (int i = 0; i < psize; ++i) {
+					for (int m = 0; m < rcounts[i]; ++m) {
+						printf("%lg ", data.ptr()[k*rcounts[i]*data.n() + m]);
+					}
+				}
+				printf("\n");
+			}
+*/
+			free(displs);
+			free(rcounts);
+
 			//auto [R, Y] = matplot::meshgrid(matplot::linspace(0, T, N), matplot::linspace(0, X, M));
 			//auto [I, J] = matplot::meshgrid(matplot::linspace(0, N-1, N), matplot::linspace(0, M-1, M));
 			//auto Z = matplot::transform(I, J, [&data](size_t k, size_t m) { return data(k, m); });

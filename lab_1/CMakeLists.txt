@@ -27,8 +27,6 @@ target_link_libraries(${EXEC_FILE} PRIVATE
                         Matplot++::matplot
                      )
 
-set (COMPILER_SETTINGS
-    -O2
-)
+set (COMPILER_SETTINGS -Wall)
 
 target_compile_options(${EXEC_FILE} PRIVATE ${COMPILER_SETTINGS})

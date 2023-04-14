@@ -9,7 +9,7 @@
 #endif
 
 #ifndef MAX_NUM
-#define MAX_NUM 1000
+#define MAX_NUM 10000
 #endif
 
 int main(int argc, char *argv[], char *envp[]) {
