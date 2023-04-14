@@ -12,7 +12,7 @@ double cross_scheme(const ftype &f, const matrix_t &data, const size_t offset, c
 	size_t kn_1 = ((k == 0) ? 0 : k-1);
 
 	if (m   == 0) pvalue = ot_val.first;
-	else  pvalue = data(kn_1, m);
+	else  pvalue = data(k, m-1);
 	if (m+1 == data.m()) nvalue = ot_val.second;
 	else nvalue = data(k, m+1);
 
@@ -59,7 +59,6 @@ void parallel_conv(const ftype &f, const utype &phi, const utype &psi, matrix_t 
 
 	MPI_Status status;
 	
-
 	double prev_data, next_data;
 	for (size_t k = 1; k < data.n(); ++k) {
 		if (id != 0) {
@@ -71,36 +70,29 @@ void parallel_conv(const ftype &f, const utype &phi, const utype &psi, matrix_t 
 					next_data = matrix(k-1, rcounts[id]-1);
 			}
 		} else {	
-			MPI_Sendrecv(&matrix(k-1, rcounts[id]-1), 1, MPI_DOUBLE, id+1, 0, &next_data, 1, MPI_DOUBLE, id+1, 0, comm[0], &status);
+			MPI_Sendrecv(&matrix(k-1,   rcounts[id]-1), 1, MPI_DOUBLE, id+1, 0, &next_data, 1, MPI_DOUBLE, id+1, 0, comm[0], &status);
 			prev_data = matrix(k-1, 0);
 		}
-		//if (id == 0) printf("id = %d| prev = %lg | next = %lg\n", id, prev_data, next_data);
+
 		for (int m = ((id == 0) ? 1 : 0); m < rcounts[id]; ++m) 
 			matrix(k, m) = cross_scheme(f, matrix, displs[id], k-1, m, {prev_data, next_data});
-	}
-	rcounts[0] = rcounts[0] * data.n(), displs[0] = 0;
-	for (int i = 1; i < np; ++i) rcounts[i] *= data.n(), displs[i] = displs[i-1] + rcounts[i-1];
-	//if (id == 1) matrix.dump(std::cout);
-
-	int flag = 1;
+	}	
+	
+	MPI_Request request;
 	if (id == 0) {
-		printf("id = %d\n", id);
-		matrix.dump(std::cout);
-		MPI_Send(&flag, 1, MPI_INT, id+1, 0, comm[0]);
-	} else if (id + 1 == np) {
-		MPI_Recv(&flag, 1, MPI_INT, id-1, 0, comm[0], &status);
-		printf("id = %d\n", id);
-		matrix.dump(std::cout);
-	}
-	else {
-		MPI_Recv(&flag, 1, MPI_INT, id-1, 0, comm[0], &status);
-		printf("id = %d\n", id);
-		matrix.dump(std::cout);
-		MPI_Send(&flag, 1, MPI_INT, id+1, 0, comm[0]);
+		for (int i = 0; i < data.n(); ++i) {
+			memcpy(data.ptr() + i*data.m(), matrix.ptr() + i*matrix.m(), matrix.m()*sizeof(double));
+			for (int j = 1; j < np; ++j) 
+				MPI_Irecv(data.ptr() + i*data.m() + displs[j], rcounts[j], MPI_DOUBLE, j, 0, comm[0], &request);
+		}
+	} else {
+		for (int i = 0; i < data.n(); ++i)
+			MPI_Isend(matrix.ptr() + i*matrix.m(), rcounts[id], MPI_DOUBLE, 0, 0, comm[0], &request);
 	}
 	MPI_Barrier(comm[0]);
 
-	MPI_Gatherv(matrix.ptr(), rcounts[id], MPI_DOUBLE, data.ptr(), rcounts, displs, MPI_DOUBLE, 0, comm[0]);
+	//for (int i = 0; i < np; ++i) rcounts[i] *= data.n(), displs[i] *= rcounts[i];
+	//MPI_Gatherv(matrix.ptr(), rcounts[id], MPI_DOUBLE, data.ptr(), rcounts, displs, MPI_DOUBLE, 0, comm[0]);
 
 	free(displs);
 	free(rcounts);

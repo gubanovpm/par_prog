@@ -78,16 +78,11 @@ int main(int argc, char *argv[], char *envp[]) {
     gettimeofday(&start, NULL);
 		parallel_conv(f, phi, psi, data, &prime_comm);
 		gettimeofday(&stop, NULL);
-		//if(prank == 0) std::cout << "Parallel time is: " << (double)((stop.tv_sec - start.tv_sec) * 1000000 + (stop.tv_usec - start.tv_usec)) / 1000000 << "s" << std::endl;
+		double ttime = (double)((stop.tv_sec - start.tv_sec) * 1000000 + (stop.tv_usec - start.tv_usec)) / 1000000;
 
 		if (prank == 0) {
-			int *displs  = (int *)malloc(psize * sizeof(int));
-			int *rcounts = (int *)malloc(psize * sizeof(int));
-			for (int i = 0; i < psize; ++i) {
-				uint64_t borders = get_borders(data.m(), i, psize);
-				displs [i] = (LBMASK(borders) - 1);
-				rcounts[i] = RBMASK(borders);
-			}
+			printf("Parallel time is: %lg\n", ttime);
+			data.dump(std::cout);
 
 			printf("\n");
 /*
@@ -100,20 +95,18 @@ int main(int argc, char *argv[], char *envp[]) {
 				printf("\n");
 			}
 */
-			free(displs);
-			free(rcounts);
+/*
+			auto [R, Y] = matplot::meshgrid(matplot::linspace(0, T, N), matplot::linspace(0, X, M));
+			auto [I, J] = matplot::meshgrid(matplot::linspace(0, N-1, N), matplot::linspace(0, M-1, M));
+			auto Z = matplot::transform(I, J, [&data](size_t k, size_t m) { return data(k, m); });
+			data.dump(std::cout);
 
-			//auto [R, Y] = matplot::meshgrid(matplot::linspace(0, T, N), matplot::linspace(0, X, M));
-			//auto [I, J] = matplot::meshgrid(matplot::linspace(0, N-1, N), matplot::linspace(0, M-1, M));
-			//auto Z = matplot::transform(I, J, [&data](size_t k, size_t m) { return data(k, m); });
-			//data.dump(std::cout);
-
-			//matplot::surf(Y, R, Z);
-			//matplot::colorbar();
-			//matplot::xlabel("X");
-			//matplot::ylabel("T");
-			//matplot::show();
-
+			matplot::surf(Y, R, Z);
+			matplot::colorbar();
+			matplot::xlabel("X");
+			matplot::ylabel("T");
+			matplot::show();
+*/
 		}
 	}
 	MPI_Finalize();
