@@ -16,6 +16,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <iomanip>
+#include <unistd.h>
 
 #include <mpi.h>
 #include <matplot/matplot.h>
@@ -72,6 +73,8 @@ public:
 void simple_conveyor(const ftype &f, const utype &phi, const utype &psi, matrix_t &data);
 void parallel_conv(const ftype &f, const utype &phi, const utype &psi, matrix_t &data, MPI_Comm *comm);
 double cross_scheme(const ftype &f, const matrix_t &data, const size_t n, const size_t m);
+double cross_scheme(const ftype &f, const matrix_t &data, const size_t offset, const size_t k, const size_t m, const std::pair<double, double> &ot_val);
 uint64_t get_borders(uint64_t last_num, int rank, int np);
+void draw_graph(const std::string &name_file, const matrix_t &data);
 
 #endif

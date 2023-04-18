@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.4.0)
-project(par_laba)
+project(par_laba_1)
 
 find_package(MPI	REQUIRED)
 find_package(Matplot++ REQUIRED)
@@ -14,7 +14,7 @@ message(STATUS ${MPI_C_LIBRARIES})
 set (EXEC_FILE "laba")
 
 set (SOURCES 
-            main.cc
+            perf.cc
             transfer_equation.cc
     )
 
@@ -27,6 +27,16 @@ target_link_libraries(${EXEC_FILE} PRIVATE
                         Matplot++::matplot
                      )
 
-set (COMPILER_SETTINGS -Wall)
+set (COMPILER_SETTINGS -Wall -O3)
+
+if (GRAPHICS)
+    target_compile_definitions(${EXEC_FILE} PRIVATE GRAPHICS)
+endif()
+if (CROSS_SCHEME)
+    target_compile_definitions(${EXEC_FILE} PRIVATE CROSS_SCHEME)
+endif()
+if (RECT_SCHEME)
+    target_compile_definitions(${EXEC_FILE} PRIVATE RECT_SCHEME)
+endif()
 
 target_compile_options(${EXEC_FILE} PRIVATE ${COMPILER_SETTINGS})
