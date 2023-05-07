@@ -74,7 +74,7 @@ void *thread_func(void *dummy) {
 			double scb = (temp.fb + fc) * (temp.b - c) / 2;
 			double sacb = sac + scb;
 
-			if (fabs(temp.sab - sacb) < EPS * fabs(sacb)) {
+			if (fabs(temp.sab - sacb) < EPS) {
 				ls += sacb;
 				if (!lstack.sp) break;
 				pop(&lstack, &temp);
@@ -89,9 +89,10 @@ void *thread_func(void *dummy) {
 			if ((lstack.sp > SPK) && (!gstack.sp)) {
 				sem_wait(&gstack_empty);
 				if (!gstack.sp) sem_post(&gstack_tasks);
-				while ((lstack.sp > 1) && (gstack.sp + 1 < MAX_STACK_SIZE)) {
-					pop (&lstack, &temp);
-					push(&gstack, &temp);
+				while ((lstack.sp > 1) && (gstack.sp + (size_t)1 < MAX_STACK_SIZE)) {
+					stack_data_t t;
+					pop (&lstack, &t);
+					push(&gstack, &t);
 				}
 				sem_post(&gstack_empty);
 			}

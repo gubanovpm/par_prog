@@ -26,11 +26,11 @@
 #endif
 
 #ifndef EPS
-#define EPS 0.00001
+#define EPS 0.000001
 #endif
 
 #ifndef SPK 
-#define SPK 30
+#define SPK 5
 #endif
 
 #endif
