@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <math.h>
 #include <errno.h>
+#include <sys/time.h>
 
 #ifndef BEG
 #define BEG 0.001
@@ -22,15 +23,15 @@
 #endif
 
 #ifndef THREAD_COUNT
-#define THREAD_COUNT 12
+#define THREAD_COUNT 4
 #endif
 
 #ifndef EPS
-#define EPS 0.001
+#define EPS 0.0001
 #endif
 
 #ifndef SPK 
-#define SPK 30
+#define SPK 5
 #endif
 
 #endif

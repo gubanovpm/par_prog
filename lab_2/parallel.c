@@ -9,6 +9,9 @@ sem_t gstack_empty, gstack_tasks, is_summing;
 stack_t gstack;
 
 int main() {
+	struct timeval stop, start;
+	gettimeofday(&start, NULL);
+
 	gstack.sp = 0;
 	if (sem_init(&gstack_empty, 0, 1)) {
 		printf("Error on init semaphore, return value = %d\n", errno);
@@ -26,25 +29,29 @@ int main() {
 	stack_data_t temp = {BEG, END, F(BEG), F(END), (F(END)+F(BEG))*(END-BEG)/2};
 	push(&gstack, &temp);
 	pthread_t thid[THREAD_COUNT];
-	int result;
+	int result;	
+
 	for (size_t i = 0; i < THREAD_COUNT; ++i) {
 		if (result = pthread_create(thid + i, (pthread_attr_t *)NULL, thread_func, (void *)NULL)) {
 			printf("Error on thread create, return value = %d\n", result);
 			exit(-1);
 		}
-	}
 		#ifdef HAVE_THR_SETCONCURRENCY_PROTO
 			thr_setconcurrency(THREAD_COUNT);
 		#endif
+	}
 
 	for (size_t i = 0; i < THREAD_COUNT; ++i) {
 		pthread_join(thid[i], (void **)NULL);
-	}
+	}	
 
 	sem_destroy(&gstack_empty);
 	sem_destroy(&gstack_tasks);
 	sem_destroy(&is_summing);
-	printf("Integral is = %lg\n", s);
+
+	gettimeofday(&stop, NULL);
+	double ttime = (double)((stop.tv_sec - start.tv_sec) * 1000000 + (stop.tv_usec - start.tv_usec)) / 1000000;
+	printf("parralel: value=%lg time=%lg\n", s, ttime);
 
 	return 0;
 }

@@ -2,6 +2,9 @@
 #include "stack_t.h"
 
 int main() {
+	struct timeval stop, start;
+  gettimeofday(&start, NULL);
+	
 	stack_t stack;
 	stack.sp = 0;
 
@@ -30,6 +33,9 @@ int main() {
 			A = t.a, B = t.b, fA = t.fa, fB = t.fb, sAB = t.sab;
 		}
 	}
-	printf("%lg\n", s);
+	gettimeofday(&stop, NULL);
+	double ttime = (double)((stop.tv_sec - start.tv_sec) * 1000000 + (stop.tv_usec - start.tv_usec)) / 1000000;
+
+	printf("seq: value=%lg time=%lg\n", s, ttime);
 	return 0;
 }
