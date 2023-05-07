@@ -21,7 +21,7 @@ int main() {
 		double sCB  = (fC + fB) * (B-C)/2;
 		double sACB = sAC + sCB;
 
-		if (fabs(sAB - sACB) >= EPS * fabs(sACB)) {
+		if (fabs(sAB - sACB) >= EPS ) {
 			stack_data_t t = {A, C, fA, fC, sAC};
 			push(&stack, &t);
 			A = C, fA = fC, sAB = sCB;

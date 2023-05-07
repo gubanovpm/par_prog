@@ -11,7 +11,7 @@
 #include <sys/time.h>
 
 #ifndef BEG
-#define BEG 0.0001
+#define BEG 0.00001
 #endif
 
 #ifndef END
@@ -27,11 +27,11 @@
 #endif
 
 #ifndef EPS
-#define EPS 0.00001
+#define EPS 0.0000001
 #endif
 
 #ifndef SPK 
-#define SPK 5
+#define SPK 2
 #endif
 
 #endif
