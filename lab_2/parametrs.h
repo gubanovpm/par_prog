@@ -11,7 +11,7 @@
 #include <sys/time.h>
 
 #ifndef BEG
-#define BEG 0.001
+#define BEG 0.0001
 #endif
 
 #ifndef END
@@ -19,15 +19,15 @@
 #endif
 
 #ifndef F
-#define F(__a) (sin(1/(__a)/(__a)))
+#define F(__a) (sin(1/(__a))*sin(1/(__a))/(__a)/(__a))
 #endif
 
 #ifndef THREAD_COUNT
-#define THREAD_COUNT 4
+#define THREAD_COUNT 10
 #endif
 
 #ifndef EPS
-#define EPS 0.0001
+#define EPS 0.00001
 #endif
 
 #ifndef SPK 
