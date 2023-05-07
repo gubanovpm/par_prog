@@ -74,7 +74,7 @@ void *thread_func(void *dummy) {
 			double scb = (temp.fb + fc) * (temp.b - c) / 2;
 			double sacb = sac + scb;
 
-			if (fabs(temp.sab - sacb) < EPS) {
+			if (fabs(temp.sab - sacb) < EPS * fabs(sacb)) {
 				ls += sacb;
 				if (!lstack.sp) break;
 				pop(&lstack, &temp);
