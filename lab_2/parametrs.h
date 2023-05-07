@@ -10,7 +10,7 @@
 #include <errno.h>
 
 #ifndef BEG
-#define BEG 0.00001
+#define BEG 0.001
 #endif
 
 #ifndef END
@@ -18,19 +18,19 @@
 #endif
 
 #ifndef F
-#define F(__a) (sin(1/(__a)) * sin(1/(__a))) / (__a) / (__a)
+#define F(__a) (sin(1/(__a)/(__a)))
 #endif
 
 #ifndef THREAD_COUNT
-#define THREAD_COUNT 6
+#define THREAD_COUNT 12
 #endif
 
 #ifndef EPS
-#define EPS 0.000001
+#define EPS 0.001
 #endif
 
 #ifndef SPK 
-#define SPK 5
+#define SPK 30
 #endif
 
 #endif
