@@ -2,8 +2,10 @@
 #define __game_of_life_hh__
 
 #include <iostream>
+#include <fstream>
 #include <cstdlib>
 #include <mpi.h>
+#include <cmath>
 
 #define C2B (8*sizeof(unsigned char))
 #define LBMASK(_arg_) (((uint64_t)0xffffffff00000000 & _arg_) >> 32)
@@ -11,8 +13,8 @@
 
 namespace GOL {
 
-struct bit_set final {
-private:
+struct bit_set {
+protected:
 	unsigned char *__data = nullptr;
 	unsigned char *__temp = nullptr;
 	size_t __n;
@@ -30,9 +32,18 @@ public:
 			__data = new unsigned char [2*n*(m/C2B + __is_alignment)]{};
 			__temp = __data + __n*(__m/C2B + __is_alignment);
 		}
+	bit_set() {}
+
+	void set_ptr(unsigned char *new_ptr) {
+		if      (__state == 1) delete [] __temp;
+		else if (__state == 0) delete [] __data;	
+		__state = 2;
+		__data = new_ptr;
+	}
+	unsigned char *get_ptr() const { return __data;}
 	~bit_set() { 
-		if (__state) delete [] __temp;
-		else         delete [] __data;
+		if      (__state == 1) delete [] __temp;
+		else if (__state == 0) delete [] __data;
 	}
 
 	size_t n() const noexcept { return __n; }
@@ -41,42 +52,35 @@ public:
 	bool getb(const size_t n, const size_t m) const;
 	void setb(const size_t n, const size_t m, const bool state);
 	void dump(std::ostream &out, const bool buf_num = 1) const noexcept;
-	void rand_filling();
+	void rand_filling() noexcept;
 };
 
-struct game_t final {
+uint64_t get_borders(uint64_t last_num, int rank, int np);
+
+struct game_field final : public bit_set {
 private:
 	int __id;
 	int __np;
-	MPI_Comm __comm;
-	size_t *__rcounts;
-	size_t *__displs;
-	bit_set *__data = nullptr;
+	MPI_Comm *__comm;
+	bit_set __up, __dn;
 
-	uint64_t get_borders(uint64_t last_num, int rank, int np);
 	size_t neighbours_count(const size_t i, const size_t j) const noexcept;
+	void transfer() noexcept;
 public:
-	game_t(const size_t n, const size_t m) {
-		__comm = MPI_COMM_WORLD;
-		MPI_Comm_size(__comm, &__np);
-		MPI_Comm_rank(__comm, &__id);
-		__rcounts = new size_t [__np]{};
-		__displs  = new size_t [__np]{};
-		for (int i = 0; i < __np; ++i) {
-			uint64_t borders = get_borders(n, i, __np);
-			__displs [i] = LBMASK(borders) - 1;
-			__rcounts[i] = RBMASK(borders);
+	game_field(const size_t n, const size_t m, MPI_Comm *comm) :
+		bit_set(n, m), __comm(comm) {
+			MPI_Comm_size(__comm[0], &__np);
+			MPI_Comm_rank(__comm[0], &__id);
+			if (__np == 1) {	
+				__up.set_ptr(__data + __n * (__m/C2B + __is_alignment));
+				__dn.set_ptr(__data);
+			} else {
+				__up = {1, m}; __dn = {1, m};
+			}
 		}
-		__data = new bit_set {__rcounts[__id] + 2, m};
-		}
-	~game_t() {
-		delete [] __rcounts;
-		delete [] __displs;
-		delete __data;
-	}
 
-	void dump(std::ostream &out, const bool buf_num = 1) const noexcept;
 	void transform() noexcept;
+	void get_from_file(const std::string &path) noexcept;
 };
 
 };
